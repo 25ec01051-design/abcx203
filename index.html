@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Instagram Chat 💜</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #000; color: #fff; display: flex; justify-content: center; align-items: center; height: 100dvh; width: 100vw; overflow: hidden; position: relative; }
+        
+        #intro-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #2a0b3a 0%, #000 100%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+        .notif-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            width: 90%;
+            max-width: 350px;
+            padding: 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            animation: bounceIn 1s ease;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .notif-img { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); padding: 2px; margin-right: 15px; }
+        .notif-img-inner { width: 100%; height: 100%; border-radius: 50%; background: #000; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .notif-content { flex-grow: 1; }
+        .notif-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 2px; }
+        .notif-msg { font-size: 0.85rem; color: #ccc; }
+        .tap-hint { margin-top: 20px; font-size: 0.8rem; color: #888; letter-spacing: 1px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        #main-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #1a0b2e, #4b1d52, #1a0b2e); z-index: 0; }
+
+        #progress-heart-bg { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85vw; height: 85vw; max-width: 500px; max-height: 500px; z-index: 1; opacity: 0.15; pointer-events: none; transition: filter 0.8s ease, opacity 1s ease; }
+        .heart-path { fill: none; stroke: #d1b3ff; stroke-width: 0.3; }
+        #heart-fill-rect { transition: y 0.5s ease-out; }
+
+        .neon-glow {
+            opacity: 1 !important;
+            filter: drop-shadow(0 0 10px #e81cff) drop-shadow(0 0 20px #8b51f5) brightness(1.5) !important;
+            animation: pulseGlow 2s infinite alternate ease-in-out;
+        }
+        @keyframes pulseGlow { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) scale(1.08); } }
+
+        .rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        .drop { position: absolute; bottom: 100%; width: 2px; height: 20px; background: rgba(189, 147, 249, 0.6); animation: fall linear infinite; }
+        @keyframes fall { to { transform: translateY(100vh); } }
+
+        #phone-container { width: 100%; height: 100%; background: rgba(20, 10, 30, 0.4); backdrop-filter: blur(8px); display: flex; flex-direction: column; position: relative; z-index: 10; opacity: 0; transition: opacity 1s ease; }
+        #header { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 5, 25, 0.7); justify-content: space-between; }
+        .header-left { display: flex; align-items: center; }
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(45deg, #8b51f5, #e81cff); padding: 2px; margin-right: 12px; }
+        .profile-pic-inner { width: 100%; height: 100%; border-radius: 50%; background-color: #111; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; }
+        .username { font-weight: 600; font-size: 0.95rem; }
+        .active-status { font-size: 0.75rem; color: #a0a0a0; }
+        #mute-btn { background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; padding: 5px; }
+
+        #chat-box { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; scroll-behavior: smooth; }
+        #chat-box::-webkit-scrollbar { display: none; }
+        .msg-row { display: flex; margin-bottom: 15px; opacity: 0; transform: translateY(10px); animation: fadeIn 0.4s forwards; width: 100%; position: relative; }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        
+        .msg-row.me { justify-content: flex-start; } 
+        .msg-row.her { justify-content: flex-end; } 
+        .msg-bubble { max-width: 80%; padding: 10px 14px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; position: relative; cursor: pointer; }
+        .msg-row.me .msg-bubble { background: rgba(255, 255, 255, 0.12); color: #fff; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .msg-row.her .msg-bubble { background: linear-gradient(135deg, #8b51f5, #b388ff); color: #fff; border-bottom-right-radius: 4px; box-shadow: 0 4px 10px rgba(139, 81, 245, 0.2); }
+        
+        .timestamp { font-size: 0.65rem; opacity: 0.6; margin-top: 4px; display: block; text-align: right; }
+        .msg-img { width: 100%; max-width: 250px; border-radius: 12px; margin-top: 5px; border: 2px solid #8b51f5; display: block; }
+
+        .reaction-panel { position: absolute; top: -45px; left: 10px; background: #262626; border-radius: 30px; padding: 5px 12px; display: none; gap: 10px; z-index: 200; border: 1px solid #444; }
+        .emoji-opt { cursor: pointer; font-size: 1.3rem; transition: transform 0.2s; }
+        .reaction-badge { position: absolute; bottom: -12px; right: 10px; background: #262626; border: 1px solid #444; border-radius: 12px; padding: 2px 6px; font-size: 0.8rem; display: none; z-index: 10; }
+
+        .typing-indicator { display: none; background: rgba(255, 255, 255, 0.1); padding: 10px 14px; border-radius: 20px; width: fit-content; margin-bottom: 12px; }
+        .dot { display: inline-block; width: 6px; height: 6px; background-color: #d1b3ff; border-radius: 50%; margin: 0 2px; animation: bounceAni 1.4s infinite ease-in-out both; }
+        @keyframes bounceAni { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        #options-area { padding: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); background: rgba(15, 5, 25, 0.7); display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 80px; }
+        .option-btn { background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(209, 179, 255, 0.3); padding: 10px 18px; border-radius: 25px; font-size: 0.85rem; cursor: pointer; flex-grow: 1; transition: 0.2s; }
+        .option-btn:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body onclick="hideAllReactions()">
+
+    <div id="intro-screen" onclick="enterChat()">
+        <div class="notif-card">
+            <div class="notif-img"><div class="notif-img-inner">💜</div></div>
+            <div class="notif-content">
+                <div class="notif-title">Veer🤦‍♀️</div>
+                <div class="notif-msg">hi 👋</div>
+            </div>
+        </div>
+        <div class="tap-hint">TAP TO OPEN</div>
+    </div>
+
+    <div id="main-bg"></div>
+    <div id="progress-heart-bg">
+        <svg viewBox="0 0 32 29.6" width="100%" height="100%">
+            <defs>
+                <clipPath id="heart-clip">
+                    <path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2
+                    c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z"/>
+                </clipPath>
+            </defs>
+            <path class="heart-path" d="M23.6,0.5c-3.2,0-6,2.5-7.3,5.3C15,3,12.2,0.5,9,0.5C4.4,0.5,0.5,4.4,0.5,9c0,9.1,9.4,11.7,15.5,20.1
+            c5.8-8.5,15.5-11.4,15.5-20.1C31.5,4.4,27.6,0.5,23.6,0.5z" fill="none" stroke="#d1b3ff" stroke-width="0.3"/>
+            <rect id="heart-fill-rect" x="0" y="30" width="32" height="32" fill="url(#grad)" clip-path="url(#heart-clip)"/>
+            <linearGradient id="grad" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" style="stop-color:#8b51f5;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#e81cff;stop-opacity:1" />
+            </linearGradient>
+        </svg>
+    </div>
+
+    <div class="rain" id="rain-container"></div>
+
+    <div id="phone-container">
+        <div id="header">
+            <div class="header-left">
+                <div class="profile-pic"><div class="profile-pic-inner">💜</div></div>
+                <div class="user-info"><div class="username">Veer🤦‍♀️</div><div class="active-status">Active now</div></div>
+            </div>
+            <button id="mute-btn" onclick="toggleMusic(event)">🔊</button>
+        </div>
+        <div id="chat-box">
+            <div class="msg-row me"><div class="msg-bubble">hi 👋<span class="timestamp">Just now</span></div></div>
+            <div id="typing" class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+        <div id="options-area">
+            <button class="option-btn" onclick="sendReply('hi 🎵', startMusicAndChat)">hi 🎵</button>
+        </div>
+    </div>
+
+    <script>
+        function enterChat() {
+            const intro = document.getElementById('intro-screen');
+            const chat = document.getElementById('phone-container');
+            intro.style.transform = 'translateY(-100%)';
+            setTimeout(() => { chat.style.opacity = '1'; intro.style.display = 'none'; scrollToBottom(); }, 600);
+        }
+
+        const rain = document.getElementById('rain-container');
+        for(let i=0; i<60; i++) { 
+            let drop = document.createElement('div'); drop.classList.add('drop'); 
+            drop.style.left = Math.random() * 100 + 'vw'; 
+            drop.style.animationDuration = Math.random() * 1.5 + 1 + 's'; 
+            rain.appendChild(drop); 
+        }
+
+        const chatBox = document.getElementById('chat-box');
+        const optionsArea = document.getElementById('options-area');
+        const typingIndicator = document.getElementById('typing');
+        const muteBtn = document.getElementById('mute-btn');
+        const heartFillRect = document.getElementById('heart-fill-rect');
+        const heartContainer = document.getElementById('progress-heart-bg');
+        const audio = new Audio('song.mp3.mp3'); audio.loop = true;
+
+        let currentProgress = 0;
+        
+        function updateHeart(percent) {
+            currentProgress = percent;
+            const yValue = 30 - (percent * 0.3); 
+            heartFillRect.setAttribute('y', yValue);
+        }
+
+        function incrementHeart() {
+            if (currentProgress < 100) { updateHeart(currentProgress + 2.5); }
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+            }, 100);
+        }
+
+        const traits = [
+            "Pehla to humesha supportive rehne ke liye 😊😊",
+            "IITian ban gaye ab to isme bhi contribution hai hi tumhara 🎓✨",
+            "Jyada banavati nahi rehne ke liye, jaisi real me ho waise hi rehne ke liye 🙂",
+            "Trust karti ho humpe joki acchi baat hai 😅",
+            "Waise hum hain hi itne acche 😌😌",
+            "Maturity tumhari jyada hai, isliye shayad gyan bhi itna deti ho 😆😆😆",
+            "Inside and out, you are absolutely beautiful ❤️",
+            "Kyunki tumhi shayad iklauti female friend ho 🤣🤣🤣"
+        ];
+        let currentTraitIndex = 0;
+
+        function toggleMusic(e) {
+            e.stopPropagation();
+            if (audio.paused) { audio.play(); muteBtn.innerText = "🔊"; } 
+            else { audio.pause(); muteBtn.innerText = "🔇"; }
+        }
+
+        function appendMessage(sender, text, isImage = false) {
+            incrementHeart();
+            const row = document.createElement('div'); 
+            row.className = `msg-row ${sender}`;
+            const bubble = document.createElement('div'); 
+            bubble.className = 'msg-bubble';
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let content = isImage ? `<img src="${text}" class="msg-img" onload="scrollToBottom()">` : text;
+            bubble.innerHTML = `${content}<span class="timestamp">${time}</span>`;
+            
+            if (sender === 'me') {
+                const panel = document.createElement('div'); 
+                panel.className = 'reaction-panel';
+                panel.innerHTML = `<span class="emoji-opt" onclick="applyReaction(event, this, '❤️')">❤️</span><span class="emoji-opt" onclick="applyReaction(event, this, '😂')">😂</span><span class="emoji-opt" onclick="applyReaction(event, this, '🔥')">🔥</span><span class="emoji-opt" onclick="applyReaction(event, this, '🙌')">🙌</span>`;
+                bubble.onclick = (e) => { e.stopPropagation(); hideAllReactions(); panel.style.display = 'flex'; };
+                bubble.appendChild(panel);
+            }
+            row.appendChild(bubble); chatBox.insertBefore(row, typingIndicator); 
+            scrollToBottom();
+            if(isImage && text === 'bouquet.jpg') triggerConfetti();
+        }
+
+        function applyReaction(e, element, emoji) { e.stopPropagation(); const bubble = element.closest('.msg-bubble'); const badge = document.createElement('div'); badge.className = 'reaction-badge'; badge.innerText = emoji; badge.style.display = 'block'; bubble.appendChild(badge); hideAllReactions(); }
+        function hideAllReactions() { document.querySelectorAll('.reaction-panel').forEach(p => p.style.display = 'none'); }
+        function showTyping() { optionsArea.innerHTML = ''; typingIndicator.style.display = 'block'; scrollToBottom(); }
+        function hideTyping() { typingIndicator.style.display = 'none'; }
+        function setOptions(buttonsHTML) { optionsArea.innerHTML = buttonsHTML; }
+
+        function sendReply(text, nextStepFunc) { 
+            appendMessage('her', text); 
+            setTimeout(() => { showTyping(); setTimeout(() => { hideTyping(); nextStepFunc(); }, 4000); }, 1200); 
+        }
+
+        function startMusicAndChat() { audio.play().catch(() => {}); appendMessage('me', "Happy Women's Day! 🌸"); setOptions(`<button class="option-btn" onclick="sendReply('thank you 😊', step3)">thank you 😊</button>`); }
+        function step3() { appendMessage('me', 'Mere taraf se bhi thank you 😅'); setOptions(`<button class="option-btn" onclick="sendReply('Kyu? 🤔', stepWhy)">Kyu? 🤔</button><button class="option-btn" onclick="sendReply('Of course! 😎', stepAttitude)">Of course! 😎</button>`); }
+
+        function stepAttitude() { 
+            appendMessage('me', 'kaise kar leti ho ? 😂😂'); 
+            setTimeout(() => { 
+                showTyping(); 
+                setTimeout(() => { hideTyping(); appendMessage('me', 'par hain kuch reasons'); setOptions(`<button class="option-btn" onclick="sendReply('jaise ? 🤔', nextTrait)">jaise ? 🤔</button>`); }, 4000); 
+            }, 3000);
+        }
+
+        function stepWhy() { appendMessage('me', 'kai reasons hain 😅😅 jaise-'); setOptions(`<button class="option-btn" onclick="sendReply('Jaise? 🤔', nextTrait)">Jaise? 🤔</button>`); }
+
+        function nextTrait() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                if (currentTraitIndex < traits.length) {
+                    appendMessage('me', traits[currentTraitIndex]);
+                    let btnText = "Aur batao 😁";
+                    if (currentTraitIndex === 0) btnText = "Bilkul! 😇";
+                    if (currentTraitIndex === 1) btnText = "Hmm... 😅";
+                    if (currentTraitIndex === 2) btnText = "Aur batao 😁";
+                    if (currentTraitIndex === 3) {
+                        currentTraitIndex++; 
+                        setTimeout(() => nextTrait(), 2500); 
+                        return;
+                    }
+                    if (currentTraitIndex === 4) btnText = "Bilkul bilkul! 😂";
+                    if (currentTraitIndex === 5) btnText = "Kaam hi waisa karte ho 😁😂";    
+                    
+                    if (currentTraitIndex === 6) {
+                        currentTraitIndex++;
+                        setOptions(`<button class="option-btn" onclick="sendReply('Aww... ✨', stepAILine)">Aww... ✨</button>`);
+                    } else {
+                        currentTraitIndex++;
+                        setOptions(`<button class="option-btn" onclick="sendReply('${btnText}', nextTrait)">${btnText}</button>`);
+                    }
+                } else { stepHeightComparison(); }
+            }, 4000);
+        }
+
+        function stepAILine() {
+            appendMessage('me', 'Waise ye line AI generated tha 😂');
+            setTimeout(() => { showTyping(); setTimeout(() => { hideTyping(); appendMessage('me', 'Par dil se tha! ❤️ Chalo last ek aur hai-'); setTimeout(() => nextTrait(), 3000); }, 4000); }, 2000);
+        }
+
+        function stepHeightComparison() {
+            appendMessage('me', 'Ek aur cheez... jo tum hamesha dusri ladkiyon se compare karti ho 😂');
+            setTimeout(() => { 
+                appendMessage('me', 'height.jpg', true); 
+                setOptions(`<button class="option-btn" onclick="sendReply('Oye! height mat bolo 😤', stepHeartComparison)">Oye! height mat bolo 😤</button>`); 
+            }, 3000);
+        }
+
+        function stepHeartComparison() {
+            appendMessage('me', 'Are theek hai 😅 mera matlab tha ki sirf faltu cheez mat compare karo...');
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    appendMessage('me', 'vo cheezein bhi compare kara karo jinme tum baakiyon se better ho ✨');
+                    setTimeout(() => {
+                        appendMessage('me', 'heart.jpg', true);
+                        setTimeout(() => { 
+                            appendMessage('me', 'jaise ki ho sakta hai tumhara mann bakiyon se saaf ho 😅😁💖'); 
+                            setOptions(`<button class="option-btn" onclick="sendReply('🥺❤️', finale)">🥺❤️</button>`); 
+                        }, 3000);
+                    }, 3000);
+                }, 3500);
+            }, 2500);
+        }
+
+        function finale() {
+            appendMessage('me', 'Bas ab 😄 bahut bata diye 😂'); 
+            setTimeout(() => { showTyping(); setTimeout(() => { hideTyping(); appendMessage('me', 'Offline to nahi de paye, online hi lelo ❤️'); setTimeout(() => { showTyping(); setTimeout(() => { hideTyping(); appendMessage('me', 'bouquet.jpg', true); setTimeout(() => { appendMessage('me', 'Sunflowers bhi hai isime 😉💖'); setTimeout(() => { showTyping(); setTimeout(() => { hideTyping(); appendMessage('me', 'Ek baat bolein? 🤔'); setOptions(`<button class="option-btn" onclick="sendReply('Haa bolo 😊', stepFinalJoke)">Haa bolo 😊</button>`); }, 3000); }, 12000); }, 4000); }, 4000); }, 3000); }, 3000); }, 2000);
+        }
+
+        function stepFinalJoke() {
+            appendMessage('me', 'Nahi rehne do 😂😂😂');
+            setTimeout(() => { 
+                updateHeart(100);
+                heartContainer.classList.add('neon-glow');
+                setOptions(`<div style="color:#d1b3ff; font-size: 0.9rem; text-align: center; width: 100%; padding: 10px;">Happy Women's Day! ✨ Keep shining.</div>`); 
+                scrollToBottom();
+            }, 3000);
+        }
+
+        function triggerConfetti() {
+            const totalFlowers = 150; 
+            for(let i=0; i<totalFlowers; i++) {
+                setTimeout(() => {
+                    let flake = document.createElement('div'); flake.innerHTML = ['🌸','✨','💜','🌷','⭐','🌻','🌹'][Math.floor(Math.random()*7)];
+                    flake.style.position = 'fixed'; flake.style.left = Math.random() * 100 + 'vw'; flake.style.top = '-50px'; flake.style.fontSize = (Math.random() * 25 + 15) + 'px'; flake.style.zIndex = '1000';
+                    const fallDuration = Math.random() * 5 + 5; flake.style.transition = `transform ${fallDuration}s linear, opacity 2s`; document.body.appendChild(flake);
+                    setTimeout(() => { flake.style.transform = `translateY(110vh) rotate(${Math.random() * 720}deg)`; setTimeout(() => flake.remove(), fallDuration * 1000 + 1000); }, 100);
+                }, i * 60); 
+            }
+        }
+    </script>
+</body>
+</html>
