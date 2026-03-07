@@ -49,13 +49,24 @@
 
         #main-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #1a0b2e, #4b1d52, #1a0b2e); z-index: 0; }
 
-        #progress-heart-bg { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85vw; height: 85vw; max-width: 500px; max-height: 500px; z-index: 1; opacity: 0.15; pointer-events: none; transition: filter 0.8s ease, opacity 1s ease; }
+        /* HEART VISIBILITY FIX FOR MOBILE */
+        #progress-heart-bg { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 85vw; height: 85vw; max-width: 500px; max-height: 500px; 
+            z-index: 1; opacity: 0.25; pointer-events: none; transition: filter 0.8s ease, opacity 1s ease; 
+        }
         .heart-path { fill: none; stroke: #d1b3ff; stroke-width: 0.3; }
+        
+        @media (max-width: 600px) {
+            #progress-heart-bg { opacity: 0.4; width: 92vw; height: 92vw; }
+            .heart-path { stroke-width: 0.5; }
+        }
+
         #heart-fill-rect { transition: y 0.5s ease-out; }
 
         .neon-glow {
             opacity: 1 !important;
-            filter: drop-shadow(0 0 10px #e81cff) drop-shadow(0 0 20px #8b51f5) brightness(1.5) !important;
+            filter: drop-shadow(0 0 15px #e81cff) drop-shadow(0 0 30px #8b51f5) brightness(1.6) !important;
             animation: pulseGlow 2s infinite alternate ease-in-out;
         }
         @keyframes pulseGlow { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-50%, -50%) scale(1.08); } }
@@ -309,7 +320,7 @@
                     setTimeout(() => {
                         appendMessage('me', 'heart.jpg', true);
                         setTimeout(() => { 
-                            appendMessage('me', 'jaise ki ho sakta hai tumhara mann bakiyon se saaf ho 😅😁💖'); 
+                            appendMessage('me', 'kyunki ho sakta hai tumhara mann bakiyon se saaf ho 😅💖'); 
                             setOptions(`<button class="option-btn" onclick="sendReply('🥺❤️', finale)">🥺❤️</button>`); 
                         }, 3000);
                     }, 3000);
